@@ -1,0 +1,34 @@
+---
+title: "Working with document parameters"
+output:
+ html_document:
+  theme: cerulean
+  number_sections: true
+  toc: true
+author: "Cristina Muschitiello"
+date: "`r format(Sys.time(), '%e %B %Y')`"
+params:
+  month: "May" 
+  year: 2020
+  name: "Cristina"
+  sequence: 100
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Welcome Message
+
+Hi everybody!
+
+I'm **`r params$name`** and this report was created in ***`r params$month` `r params$year`***
+
+## Mean Calculation
+
+```{r use of params}
+
+mean(seq(10:params$sequence))
+
+```

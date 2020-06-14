@@ -6,3 +6,5 @@ This repo contains rstudio.cloud Course materials for the June 2020 ***A UNIFIED
 URL for this workshop Rstudio Cloud material is:
 
 https://rstudio.cloud/spaces/68613/projects
+
+More Details in the *Workshop_synopsis* document.

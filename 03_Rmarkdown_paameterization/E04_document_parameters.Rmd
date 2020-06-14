@@ -1,0 +1,80 @@
+---
+title: "Working with document parameters"
+output: html_document
+author: "Nick Stamboglis"
+date: "`r format(Sys.time(), '%e %B %Y')`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(reticulate)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+## GGplot2 Graph
+
+Here's the same plot in ggplot2
+
+```{r more_pressure, echo=FALSE}
+ggplot(pressure, aes(temperature, pressure)) + geom_point()
+```
+
+## Equations
+
+### In Text 
+
+Equations can be embed in a text line: $E = mc^{2}$
+
+### Separate from text
+
+Equations can be put on a different line:  
+
+$$
+\lim_{x \to \infty} f(x)
+$$
+
+## Tables
+
+### Table Without Alignment Formatting
+
+| Col 1  | Col 2  | Col 3 |
+|--------|--------|-------|
+| Value  | Value  | Value |
+| Value  | Value  | Value |
+
+
+### Table With Alignment Formatting
+
+| Col 1 Left  | Col 2 Center  | Col 3 Right |
+|:------------|:-------------:|------------:|
+| Value       |        Value  |       Value |
+| Value       |        Value  |       Value |
+
+## Other Languages Chunk
+
+## Python
+
+```{python python_code}
+python_string = "hello, world"
+print(python_string.split(" "))
+```
