@@ -1,7 +1,7 @@
 rmarkdown::render(
-  input="/cloud/project/markdown/GP_report_render_function.Rmd", 
+  input="markdown/GP_report_render_function.Rmd", 
   output_format = "html_document",
-  output_dir = "/cloud/project/solutions",
+  output_dir = "solutions",
   params = list(
     month = "07",
     year = 2019,

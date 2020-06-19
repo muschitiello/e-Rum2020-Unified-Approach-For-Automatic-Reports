@@ -1,0 +1,179 @@
+---
+title: "***England report***"
+output:
+  html_document:
+    theme: cerulean
+params:
+  month: 4
+  year: 2019
+  executor: "Cristina Muschitiello"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Set-up options fixed globally in the Rmd (R lines not included as default). 
+
+library(data.table)
+library(EQL)
+library(ggthemes)
+library(kdensity)
+library(magrittr)
+library(PrescRiptions)
+library(reactable)
+library(tidyverse)
+options(scipen = 999)
+ggplot2::theme_set(ggthemes::theme_economist()) # Sets graphs themes to "The Economist" style
+
+monthNames = c("January", "February", "March", "April", "May", "June", "July",
+               "August","September", "October", "November","December") # Object to recall all months names 
+  
+NameMonth = monthNames[as.numeric(params$month)] # Months resulting from parameter
+
+settings = PrescRiptions::setConfig(rootdir = "/cloud/project/output",
+                                    year = params$year, month = params$month, region = "England") # Configuration option defined in the Prescriptions package. This line specifies where to save the output automatically downloaded from the package (rootdir), and provides parameters for year, month and region.
+
+dataAll = PrescRiptions::monthlyData_import(settings, sample = TRUE) # Imports data from repo and website
+
+for (i in 1:length(dataAll)){
+  print(names(dataAll)[i])
+  assign(names(dataAll)[i],dataAll[[i]])
+} # Assigns names to data.tables
+
+# dirs = dirsGen(settings)
+
+practiceBridge = PrescRiptions::plpdDemogBridge(get(settings$plpdName), get(settings$demogMapName)) # Provides a mapping for practice names across different data sources
+
+
+```
+
+## England report `r paste(NameMonth, params$year, sep = " ")`
+
+This report is generated using information on a **sample** of drugs prescriptions in primary care in *England* for the month `r paste(NameMonth, params$year, sep = " ")`. 
+
+The report is parametrized using parameters reported in the **YAML** section of the Rmd and executed by *`r params$executor`*.
+
+<span style="background-color:#ffff66">You can change *month*, *year* and *executor* name of the present report</span>, by changing the values of the corresponding `params` in the **YAML** section.
+
+---
+
+## Data description
+
+The dataset used for this report are obtained from **NHS** Presentation Level prescription data. This dataset provides information on **all individual prescription** of **drugs and appliances** provided in **primary care** in *England*
+
+The dataset is quite rich, with monthly data running from sept. 2011. Each month is about 1.5Gb. For a sample period (2018 and 2019) this dataset is made available using the **PrescRiptions** package which will be introduced in later sections.
+
+Because running test on such large dataset might cause problems, the package allow for the usage of complete data or *sample* data.
+The present report is produced on a sample of 500.000 data rows from the complete dataset.
+
+The type of information included in the data are:
+
+```{r echo=TRUE}
+
+head(get(settings$plpdName))
+
+```
+
+## Summary stats
+
+The following table provides a summary of key quantitative information for the month selected (`r paste(monthNames, params$year, sep = " ")`)
+
+```{r echo=FALSE, warning=FALSE, message = FALSE}
+
+dt <- get(settings$plpdName) %>%
+  select(PRACTICE, ITEMS, NIC, ACT.COST, QUANTITY) # Selects only relevant variables
+dt_stat <- data.table(sapply(dt[,c(2:5)], summary), keep.rownames = TRUE) # Provides summary information for relevant variables
+
+reactable(dt_stat)
+
+```
+
+## Cost Distribution
+
+We check the distribution of Net Ingredient Costs aggregated across practices
+
+```{r echo=FALSE, warning=FALSE, message = FALSE}
+
+dt_NIC = dt %>%
+  select(NIC, PRACTICE) %>%
+  group_by(PRACTICE) %>% 
+  summarise(tot_NIC = sum(NIC)) %>%
+  as.data.frame()
+# Computes NEt Ingrendient Costs Aggregated at Practice level
+
+dt_NIC %>%
+  ggplot(aes(x=tot_NIC)) +
+  geom_density(fill="#E95420", color="#E95420", alpha=0.8) + 
+  xlim(0, 350000)+
+  labs(title=paste0("Net Ingrent Cost (NIC) - Distribution by Practice"),
+  subtitle = paste0("England - ",NameMonth," ", params$year),
+       caption="source: NHS",
+       x="NIC",y="Density") + 
+  theme(plot.title = element_text(color="#333333"))+
+  scale_x_continuous(labels = function(x) stringr::str_wrap(x, width = 20))+
+   # scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6))+
+  theme(axis.text.x = element_text(size=9,vjust=0.4, hjust=0.5,color="#333333"))+
+  theme(axis.text.y = element_text(size=9,vjust=0.4, hjust=1,color="#333333"))+
+  theme(axis.title.x = element_text(margin=margin(10,10,0,0),color="#333333"))+
+  theme(axis.title.y = element_text(margin=margin(10,10,10,0),color="#333333"))
+# Creates a graphical representation of the NIC paid by single practices
+
+
+```
+
+## Prescription rates
+
+We now check how do NIC vary when considering total costs as a rate, that is when we divide total costs by the total number of registered patients in the practice.
+
+```{r echo=FALSE, warning=FALSE, message = FALSE}
+
+dt_demog_clean <- get(settings$demogName)  %>% 
+  filter(ORG_TYPE == "GP" & AGE_GROUP_5 == "ALL" & SEX == "ALL") %>%
+  select(PRACTICE = ORG_CODE,  NUMBER_OF_PATIENTS)
+# Selects a clean version of population data
+
+dt_NIC_rate <- left_join(dt_NIC, dt_demog_clean, by = "PRACTICE") %>%
+  drop_na()
+# Remove observations with empty population data
+
+dropped_practices <- nrow(dt_NIC)-nrow(dt_NIC_rate)
+# stores the number of dropped practices
+
+dt_NIC_rate$NIC_rate <- (dt_NIC_rate$tot_NIC / dt_NIC_rate$NUMBER_OF_PATIENTS)*100 # Creates a rate variable
+
+dt_NIC_rate %>%
+  ggplot(aes(x=NIC_rate)) +
+  geom_density(fill="#E95420", color="#E95420", alpha=0.8) + 
+  xlim(0, 3000)+
+  labs(title=paste0("Net Ingrent Cost (NIC) per capita - Distribution by Practice"),
+  subtitle = paste0("England - ",NameMonth," ", params$year),
+       caption="source: NHS",
+       x="NIC per capita",y="Density") + 
+  theme(plot.title = element_text(color="#333333"))+
+  # scale_x_continuous(labels = function(x) stringr::str_wrap(x, width = 20))+
+   # scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6))+
+  theme(axis.text.x = element_text(size=9,vjust=0.4, hjust=0.5,color="#333333"))+
+  theme(axis.text.y = element_text(size=9,vjust=0.4, hjust=1,color="#333333"))+
+  theme(axis.title.x = element_text(margin=margin(10,10,0,0),color="#333333"))+
+  theme(axis.title.y = element_text(margin=margin(10,10,10,0),color="#333333"))
+# Provides a graphical representation of Net Ingredient Costs per capita
+
+```
+
+The figure above uses Net Ingredient Costs (NIC) computed as a rate per capita. The distribution looks much clearer now!
+
+## High NIC per capita practices
+
+We now identify practices with high Net Ingredient Costs (NIC) per patient. For simplicity, we select as high-prescribing those practices who are in the top 5% for the NIC per capita.
+
+```{r echo=FALSE, warning=FALSE, message = FALSE}
+
+n <- 5
+dt_NIC_rate_top5 <- dt_NIC_rate[dt_NIC_rate$NIC_rate > quantile(dt_NIC_rate$NIC_rate,prob=1-n/100),] #Identifies practices in the top 5% quantile in terms of cost per capita
+
+reactable(dt_NIC_rate_top5)
+
+```
+
+The table above indicates basic information of high-NIC per capita practices.
+
+

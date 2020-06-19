@@ -19,8 +19,8 @@ renderReport = function(inputFile, outputDir, yyyy, mm, selected_gp, nameFile){
 
 # Run the function with chosen parameters
 
-renderReport(inputFile = "/cloud/project/markdown/GP_report_render_function.Rmd",
-             outputDir = "/cloud/project/output",
+renderReport(inputFile = "markdown/GP_report_render_function.Rmd",
+             outputDir = "output",
              yyyy = 2019,
              mm = "07",
              selected_gp = "A81005",

@@ -4,7 +4,7 @@ install.packages("pacman")
 
 pacman::p_load("yaml","data.table","stringr","readr","config","ggthemes",
                "ggplot2","prettydoc","rmarkdown","scales","tidyverse","dplyr",
-               "kableExtra","RCurl")
+               "kableExtra","RCurl","EQL","kdensity")
 
 ###### INSTALL PrescRiptions from source
 

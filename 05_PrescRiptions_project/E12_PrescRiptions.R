@@ -7,7 +7,7 @@ library(PrescRiptions)
 # Generate Root directory, month and year of interest using the following instruction
 # This is the only way of making these parameters valid across all package functions
 
-settings = PrescRiptions::setConfig(rootdir = "/cloud/project/output",
+settings = PrescRiptions::setConfig(rootdir = "output",
                                     year = 2019, 
                                     month = 07, 
                                     region = "England")
